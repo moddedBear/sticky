@@ -105,8 +105,38 @@ fn remove_note(index: &u16) -> bool {
 
     file.set_len(0).unwrap(); // clear file
     if lines.len() > 0 {
+        file.seek(std::io::SeekFrom::Start(0)).unwrap();
         write!(file, "{}\n", lines.join("\n")).unwrap();
     }
+    return true;
+}
+
+fn mark_done(index: &u16) -> bool {
+    let proj_dirs = get_proj_dirs!();
+    let data_dir = proj_dirs.data_dir();
+    let notes_file = data_dir.join(NOTES_FILENAME);
+    let mut file = &OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(notes_file)
+        .unwrap();
+    let buf = BufReader::new(file);
+    let mut lines: Vec<String> = buf.lines().map(|x| x.unwrap()).collect();
+
+    if index >= &(lines.len() as u16) {
+        println!("Note index out of bounds!");
+        return false;
+    }
+    let mut line = lines.remove(*index as usize);
+    if line.starts_with('*') {
+        return true;
+    }
+    line.insert(0, '*');
+    lines.insert(*index as usize, line);
+
+    file.set_len(0).unwrap(); // clear file
+    file.seek(std::io::SeekFrom::Start(0)).unwrap();
+    write!(file, "{}\n", lines.join("\n")).unwrap();
     return true;
 }
 
@@ -126,6 +156,19 @@ fn command_remove(index: &u16) {
         return;
     };
     println!("Error removing note!");
+}
+
+fn command_done(index: &u16) {
+    if *index == 0 {
+        println!("Note index out of bounds!");
+        return;
+    }
+    let adjusted_index = index - 1; // convert to 0-indexed
+    if mark_done(&adjusted_index) {
+        println!("Note marked as done!");
+        return;
+    };
+    println!("Error marking note as done!");
 }
 
 fn display_notes() {
@@ -154,6 +197,7 @@ fn main() {
     match &cli.command {
         Some(Commands::Add { note }) => command_add(note),
         Some(Commands::Remove { index }) => command_remove(&index),
+        Some(Commands::Done { index }) => command_done(&index),
         _ => display_notes(),
     }
 }
