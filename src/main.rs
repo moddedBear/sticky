@@ -185,9 +185,18 @@ fn display_notes() {
         println!("{}\n", "No sticky notes!".bold().green());
         return;
     }
-    println!("\t{}", "Sticky Notes".bold().green());
+    println!("\t{}", "Sticky Notes".bold().yellow());
     for (index, line) in lines.iter().enumerate() {
-        println!("{}\t{}", (index + 1).yellow().bold(), line);
+        if line.starts_with('*') {
+            println!(
+                "{} {}\t{}",
+                (index + 1).green().bold(),
+                "✅".bold().green(),
+                line.strip_prefix('*').unwrap()
+            );
+        } else {
+            println!("{}\t{}", (index + 1).yellow().bold(), line);
+        }
     }
     print!("\n");
 }
