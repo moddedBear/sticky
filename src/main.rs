@@ -143,6 +143,34 @@ fn mark_done(index: &u16) -> i8 {
     return 0;
 }
 
+fn clear_done() {
+    let proj_dirs = get_proj_dirs!();
+    let data_dir = proj_dirs.data_dir();
+    let notes_file = data_dir.join(NOTES_FILENAME);
+    let mut file = &OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(notes_file)
+        .unwrap();
+    let buf = BufReader::new(file);
+    let mut lines: Vec<String> = buf.lines().map(|x| x.unwrap()).collect();
+    lines.retain(|x| !x.starts_with('*'));
+    file.set_len(0).unwrap(); // clear file
+    if lines.len() == 0 {
+        return;
+    }
+    file.seek(std::io::SeekFrom::Start(0)).unwrap();
+    write!(file, "{}\n", lines.join("\n")).unwrap();
+}
+
+fn clear_all() {
+    let proj_dirs = get_proj_dirs!();
+    let data_dir = proj_dirs.data_dir();
+    let notes_file = data_dir.join(NOTES_FILENAME);
+    let file = &OpenOptions::new().write(true).open(notes_file).unwrap();
+    file.set_len(0).unwrap(); // clear file
+}
+
 fn command_add(note: &String) {
     append_note(note);
     println!("Note added!");
@@ -172,6 +200,16 @@ fn command_done(index: &u16) {
         1 => println!("Note marked done!"),
         _ => println!("Error toggling note completion!"),
     };
+}
+
+fn command_clear(all: &bool) {
+    if !all {
+        clear_done();
+        println!("Cleared completed notes!");
+        return;
+    }
+    clear_all();
+    println!("Cleared all notes!");
 }
 
 fn display_notes() {
@@ -210,6 +248,7 @@ fn main() {
         Some(Commands::Add { note }) => command_add(note),
         Some(Commands::Remove { index }) => command_remove(&index),
         Some(Commands::Done { index }) => command_done(&index),
+        Some(Commands::Clear { all }) => command_clear(&all),
         _ => display_notes(),
     }
 }
