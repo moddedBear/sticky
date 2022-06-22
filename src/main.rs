@@ -86,7 +86,7 @@ fn append_note(note: &String) {
     }
 }
 
-fn remove_notes(indicies: &Vec<u16>) -> bool {
+fn remove_note(index: &u16) -> bool {
     let proj_dirs = get_proj_dirs!();
     let data_dir = proj_dirs.data_dir();
     let notes_file = data_dir.join(NOTES_FILENAME);
@@ -97,13 +97,12 @@ fn remove_notes(indicies: &Vec<u16>) -> bool {
         .unwrap();
     let buf = BufReader::new(file);
     let mut lines: Vec<String> = buf.lines().map(|x| x.unwrap()).collect();
-    for index in indicies {
-        if index >= &(lines.len() as u16) {
-            println!("Note index out of bounds!");
-            return false;
-        }
-        lines.remove(*index as usize);
+    if index >= &(lines.len() as u16) {
+        println!("Note index out of bounds!");
+        return false;
     }
+    lines.remove(*index as usize);
+
     file.set_len(0).unwrap(); // clear file
     if lines.len() > 0 {
         write!(file, "{}\n", lines.join("\n")).unwrap();
@@ -121,8 +120,8 @@ fn command_remove(index: &u16) {
         println!("Note index out of bounds!");
         return;
     }
-    let adjusted_index = *index - 1;
-    if remove_notes(&vec![adjusted_index]) {
+    let adjusted_index = index - 1; // convert to 0-indexed
+    if remove_note(&adjusted_index) {
         println!("Note removed!");
         return;
     };
@@ -154,7 +153,7 @@ fn main() {
 
     match &cli.command {
         Some(Commands::Add { note }) => command_add(note),
-        Some(Commands::Remove { index }) => command_remove(index),
+        Some(Commands::Remove { index }) => command_remove(&index),
         _ => display_notes(),
     }
 }
