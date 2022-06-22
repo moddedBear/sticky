@@ -30,15 +30,9 @@ enum Commands {
         #[clap(value_parser)]
         index: u16,
     },
-    /// mark a sticky note as done
+    /// toggle the completion status of a note
     Done {
-        /// the index of the note to mark as done
-        #[clap(value_parser)]
-        index: u16,
-    },
-    /// mark a sticky note as undone
-    Undone {
-        /// the index of the note to mark as undone
+        /// the index of the note to mark as done/undone
         #[clap(value_parser)]
         index: u16,
     },
@@ -111,7 +105,9 @@ fn remove_note(index: &u16) -> bool {
     return true;
 }
 
-fn mark_done(index: &u16) -> bool {
+// returns 0 if marked undone, 1 if marked done, and -1 if error
+fn mark_done(index: &u16) -> i8 {
+    let marked_done: bool;
     let proj_dirs = get_proj_dirs!();
     let data_dir = proj_dirs.data_dir();
     let notes_file = data_dir.join(NOTES_FILENAME);
@@ -125,19 +121,26 @@ fn mark_done(index: &u16) -> bool {
 
     if index >= &(lines.len() as u16) {
         println!("Note index out of bounds!");
-        return false;
+        return -1;
     }
     let mut line = lines.remove(*index as usize);
     if line.starts_with('*') {
-        return true;
+        // note is already done, mark as undone
+        line.remove(0);
+        marked_done = false;
+    } else {
+        line.insert(0, '*');
+        marked_done = true;
     }
-    line.insert(0, '*');
     lines.insert(*index as usize, line);
 
     file.set_len(0).unwrap(); // clear file
     file.seek(std::io::SeekFrom::Start(0)).unwrap();
     write!(file, "{}\n", lines.join("\n")).unwrap();
-    return true;
+    if marked_done {
+        return 1;
+    }
+    return 0;
 }
 
 fn command_add(note: &String) {
@@ -164,11 +167,11 @@ fn command_done(index: &u16) {
         return;
     }
     let adjusted_index = index - 1; // convert to 0-indexed
-    if mark_done(&adjusted_index) {
-        println!("Note marked as done!");
-        return;
+    match mark_done(&adjusted_index) {
+        0 => println!("Note marked undone!"),
+        1 => println!("Note marked done!"),
+        _ => println!("Error toggling note completion!"),
     };
-    println!("Error marking note as done!");
 }
 
 fn display_notes() {
