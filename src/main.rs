@@ -5,16 +5,13 @@ use std::io::BufReader;
 
 use clap::{Parser, Subcommand};
 use directories_next::ProjectDirs;
+use owo_colors::OwoColorize;
 
 const NOTES_FILENAME: &str = "notes.txt";
 
 #[derive(Parser)]
 #[clap(version, about, long_about = None)]
 struct Cli {
-    /// Test argument that does nothing
-    #[clap(value_parser)]
-    test: Option<String>,
-
     #[clap(subcommand)]
     command: Option<Commands>,
 }
@@ -108,7 +105,9 @@ fn remove_notes(indicies: &Vec<u16>) -> bool {
         lines.remove(*index as usize);
     }
     file.set_len(0).unwrap(); // clear file
-    write!(file, "{}", lines.join("\n")).unwrap();
+    if lines.len() > 0 {
+        write!(file, "{}\n", lines.join("\n")).unwrap();
+    }
     return true;
 }
 
@@ -130,18 +129,32 @@ fn command_remove(index: &u16) {
     println!("Error removing note!");
 }
 
+fn display_notes() {
+    let proj_dirs = get_proj_dirs!();
+    let data_dir = proj_dirs.data_dir();
+    let notes_file = data_dir.join(NOTES_FILENAME);
+    let file = &OpenOptions::new().read(true).open(notes_file).unwrap();
+    let buf = BufReader::new(file);
+    let lines: Vec<String> = buf.lines().map(|x| x.unwrap()).collect();
+    if lines.len() == 0 {
+        println!("{}\n", "No sticky notes!".bold().green());
+        return;
+    }
+    println!("\t{}", "Sticky Notes".bold().green());
+    for (index, line) in lines.iter().enumerate() {
+        println!("{}\t{}", (index + 1).yellow().bold(), line);
+    }
+    print!("\n");
+}
+
 fn main() {
     let cli = Cli::parse();
 
     check_notes_file();
 
-    if let Some(test) = cli.test.as_deref() {
-        println!("Value for test: {}", test);
-    }
-
     match &cli.command {
         Some(Commands::Add { note }) => command_add(note),
         Some(Commands::Remove { index }) => command_remove(index),
-        _ => println!("No command specified"),
+        _ => display_notes(),
     }
 }

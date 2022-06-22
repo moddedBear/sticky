@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 clap = { version = "3.2.5", features = ["derive"] }
 directories-next = "2.0.0"
+owo-colors = "3.4.0"
