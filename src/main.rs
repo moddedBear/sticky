@@ -36,9 +36,9 @@ enum Commands {
         #[clap(value_parser)]
         index: u16,
     },
-    /// clear sticky notes marked as done
+    /// remove sticky notes marked as done, or all notes if the `-a` flag is given
     Clear {
-        /// clear all notes regardless of completion status
+        /// remove all notes regardless of completion status
         #[clap(short, long, action)]
         all: bool,
     },

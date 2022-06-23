@@ -34,4 +34,4 @@ Notes are stored in a plain text file for simplicity's sake which gives the adde
 
 ## Usage Ideas
 - Add sticky to your shell config to see your notes every time you launch a new terminal
-- Modify your shell's "clear screen" keybinding (most likely Alt+L) to run sticky after you clear your screen.
+- Modify your shell's "clear screen" keybinding (most likely Ctrl+L) to run sticky after you clear your screen.
