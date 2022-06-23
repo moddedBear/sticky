@@ -2,6 +2,9 @@
 A command line note manager that tries to balance simplicity and usability. Sort of like putting sticky notes up around your workspace but without the clutter.
 
 ## Installation
+```
+cargo install sticky
+```
 
 ## Usage
 ```
